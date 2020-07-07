@@ -1,3 +1,5 @@
+*.png
+*.mp4
 .vscode
 __pycache__
 checkpoints
@@ -9,3 +11,8 @@ raw
 utils/__pycache__
 video
 DownloadFiles - Shortcut.lnk
+config/yolov3-spp-ultralytics.pt
+test
+old_model/config/yolov3.weights
+old_model/checkpoints
+old_model/raw
