@@ -24,4 +24,8 @@ videos and small modifications are made to the model to fit it to Drone tracking
 **framer.py**: Get images from a video with a interval \
 **rename.py**: rename images to unique name \
 **train_val_spliter.py**: Dividing datas by set up *train.txt* and *val.txt*
+## Download
+The pre-trained weight can be download here: \
+https://drive.google.com/file/d/1HYVO936agc7nIoXqWBOVmsR46_IfebCU/view?usp=sharing \
+This weight should be named *best.pt* and placed in folder *weight*
 
