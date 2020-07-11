@@ -22,13 +22,14 @@ def get_screen_regin():
             return pos_x, pos_y
 
 
-screen_x, screen_y = get_screen_regin()
-print(screen_x[0],screen_y[0],screen_x[1],screen_y[1])
-while(True):
-    img = ImageGrab.grab(bbox=(screen_x[0],screen_y[0],screen_x[1],screen_y[1]),\
-        all_screens=True) #bbox specifies specific region (bbox= x,y,width,height)
-    img_np = np.array(img)
-    frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-    cv2.imshow("Debug", frame)
-    cv2.waitKey(25)
-cv2.destroyAllWindows()
+if __name__ == '__main__': 
+    screen_x, screen_y = get_screen_regin()
+    print(screen_x[0],screen_y[0],screen_x[1],screen_y[1])
+    while(True):
+        img = ImageGrab.grab(bbox=(screen_x[0],screen_y[0],screen_x[1],screen_y[1]),\
+            all_screens=True) #bbox specifies specific region (bbox= x,y,width,height)
+        img_np = np.array(img)
+        frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+        cv2.imshow("Debug", frame)
+        cv2.waitKey(25)
+    cv2.destroyAllWindows()

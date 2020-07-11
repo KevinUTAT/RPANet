@@ -13,6 +13,7 @@ video
 DownloadFiles - Shortcut.lnk
 config/yolov3-spp-ultralytics.pt
 test
+weights
 old_model/config/yolov3.weights
 old_model/checkpoints
 old_model/raw

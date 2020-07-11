@@ -11,10 +11,12 @@ import cv2
 import numpy as np
 import torch
 from PIL import Image, ExifTags
+from PIL import ImageGrab
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
 from utils.utils import xyxy2xywh, xywh2xyxy
+import look_at_my_screen
 
 help_url = 'https://github.com/ultralytics/yolov3/wiki/Train-Custom-Data'
 img_formats = ['.bmp', '.jpg', '.jpeg', '.png', '.tif', '.dng']
@@ -199,15 +201,30 @@ class LoadStreams:  # multiple IP or RTSP cameras
         for i, s in enumerate(sources):
             # Start the thread to read frames from the video stream
             print('%g/%g: %s... ' % (i + 1, n, s), end='')
-            cap = cv2.VideoCapture(0 if s == '0' else s)
-            assert cap.isOpened(), 'Failed to open %s' % s
-            w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            fps = cap.get(cv2.CAP_PROP_FPS) % 100
-            _, self.imgs[i] = cap.read()  # guarantee first frame
-            thread = Thread(target=self.update, args=([i, cap]), daemon=True)
-            print(' success (%gx%g at %.2f FPS).' % (w, h, fps))
-            thread.start()
+            if s == 'screen' or s == 'Screen':
+                print("Plase select regin:")
+                self.screen_x, self.screen_y = look_at_my_screen.get_screen_regin()
+                print(self.screen_x[0],self.screen_y[0],self.screen_x[1],self.screen_y[1])
+                img = ImageGrab.grab(bbox=(self.screen_x[0],self.screen_y[0],self.screen_x[1],self.screen_y[1]),\
+                    all_screens=True)
+                img_np = np.array(img)
+                frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+                w = int(len(frame[0]))
+                h = int(len(frame))
+                self.imgs[i] = frame
+                thread = Thread(target=self.update, args=([i, 'Screen']), daemon=True)
+                print(' success (%gx%g).' % (w, h))
+                thread.start()
+            else:
+                cap = cv2.VideoCapture(0 if s == '0' else s)
+                assert cap.isOpened(), 'Failed to open %s' % s
+                w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                fps = cap.get(cv2.CAP_PROP_FPS) % 100
+                _, self.imgs[i] = cap.read()  # guarantee first frame
+                thread = Thread(target=self.update, args=([i, cap]), daemon=True)
+                print(' success (%gx%g at %.2f FPS).' % (w, h, fps))
+                thread.start()
         print('')  # newline
 
         # check for common shapes
@@ -218,15 +235,28 @@ class LoadStreams:  # multiple IP or RTSP cameras
 
     def update(self, index, cap):
         # Read next stream frame in a daemon thread
-        n = 0
-        while cap.isOpened():
-            n += 1
-            # _, self.imgs[index] = cap.read()
-            cap.grab()
-            if n == 4:  # read every 4th frame
-                _, self.imgs[index] = cap.retrieve()
-                n = 0
-            time.sleep(0.01)  # wait time
+        if cap == 'Screen':
+            n = 0
+            while True:
+                n += 1
+                img = ImageGrab.grab(bbox=(self.screen_x[0],self.screen_y[0],self.screen_x[1],self.screen_y[1]),\
+                    all_screens=True)
+                if n == 4:
+                    img_np = np.array(img)
+                    frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+                    self.imgs[index] = frame
+                    n = 0
+                time.sleep(0.01)
+        else: 
+            n = 0
+            while cap.isOpened():
+                n += 1
+                # _, self.imgs[index] = cap.read()
+                cap.grab()
+                if n == 4:  # read every 4th frame
+                    _, self.imgs[index] = cap.retrieve()
+                    n = 0
+                time.sleep(0.01)  # wait time
 
     def __iter__(self):
         self.count = -1

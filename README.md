@@ -11,8 +11,17 @@ A more streamlined process is added to process training data coming in as \
 videos and small modifications are made to the model to fit it to Drone tracking.
 
 ## Change log
-2020-07-07: New model implimentation from Ultralytics with much improved prefromence. \
-2020-07-05: Upload current model to github
+### 2020-07-10:
+Including screen cap input. \
+Turns out, its very dificult to get my HikVision cameras sets streaming API to work. So instead, a temperary solution is to hav the streaming webview open and screen cap to our model. \
+```
+python detcet.py --scource screen
+```
+This will start screen cap. Left click top left and then bottom right to select the screen regin
+### 2020-07-07: 
+New model implimentation from Ultralytics with much improved prefromence. 
+### 2020-07-05: 
+Upload current model to github
 ## Know issues
 - BBox works quite poorly with 1920x1080 images, using makesense.ai instead /
 ## To do
@@ -25,7 +34,8 @@ videos and small modifications are made to the model to fit it to Drone tracking
 **rename.py**: rename images to unique name \
 **train_val_spliter.py**: Dividing datas by set up *train.txt* and *val.txt*
 ## Download
+I have trina the model on 429 images. \
 The pre-trained weight can be download here: \
 https://drive.google.com/file/d/1HYVO936agc7nIoXqWBOVmsR46_IfebCU/view?usp=sharing \
-This weight should be named *best.pt* and placed in folder *weight*
+This weight should be named *best.pt* and placed in folder *weights*
 
