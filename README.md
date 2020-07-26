@@ -1,23 +1,26 @@
 # RPANet
 A PyTorch Yolo model for tracking Remotely Piloted Aircraft(RPA) \
-The YOLOv3 implimentation is from Ultralytics LLC, and you can find the original model here: \
-https://github.com/roboflow-ai/yolov3 \
+The YOLOv5 implimentation is from Ultralytics LLC, and you can find the original model here: \
+https://github.com/ultralytics/yolov5 \
 \
-The old model uses Yolov3 implimentation by Chris Fotache \
+The oldder model uses Yolov3 implimentation by Chris Fotache \
 His original model can be find here: \
 https://github.com/cfotache/pytorch_custom_yolo_training \
 \
 A more streamlined process is added to process training data coming in as \
-videos and small modifications are made to the model to fit it to Drone tracking.
+videos and small modifications are made to the model to fit it for Drone tracking.
 
 ## Change log
+### 2020-07-26:
+Porting the latest v2.0 version of Ultralytics YOLOv5 in replace of v3. \
+The weight file size is reduced to under 100MB, and seen small inference speed improvment.\
+So far seems like the inference robustness also improved as scenes with small obstacles are beening recognized (wire fence) \
+Tried first with YOLOv4 but is much more difficult to port the model \ 
+compare to v5 as Ultralytics resued many code from v3 to implement v5
 ### 2020-07-10:
 Including screen cap input. \
-Turns out, its very dificult to get my HikVision cameras sets streaming API to work. So instead, a temperary solution is to hav the streaming webview open and screen cap to our model. \
-```
-python detcet.py --scource screen
-```
-This will start screen cap. Left click top left and then bottom right to select the screen regin
+Turns out, its very dificult to get my HikVision cameras sets streaming API to work. So instead, a temperary solution is to have the streaming webview open and screen cap to our model. 
+
 ### 2020-07-07: 
 New model implimentation from Ultralytics with much improved prefromence. 
 ### 2020-07-05: 
@@ -25,17 +28,37 @@ Upload current model to github
 ## Know issues
 - BBox works quite poorly with 1920x1080 images, using makesense.ai instead /
 ## To do
-- Intergration IP Camera stream in to the model
-- YOLOv4??
+- Reduce inference delay (currently about 0.5s)
+  
 ## Files
-**train_apex.py**: Training the modle. Options can be set through arguments \
+**train.py**: Training the modle. Options can be set through arguments \
 **detect.py**: Run tracking on vedios. Source can be set trough arguments \
 **framer.py**: Get images from a video with a interval \
 **rename.py**: rename images to unique name \
-**train_val_spliter.py**: Dividing datas by set up *train.txt* and *val.txt*
-## Download
-I have trina the model on 429 images. \
-The pre-trained weight can be download here: \
-https://drive.google.com/file/d/1HYVO936agc7nIoXqWBOVmsR46_IfebCU/view?usp=sharing \
-This weight should be named *best.pt* and placed in folder *weights*
+**train_val_spliter.py**: Dividing datas by set up *train.txt* and *val.txt* \
+**look_at_my_screen.py**: A small toy to test screen cap performence
 
+## Inference
+### From a camera connected to the computer:
+```
+python detect.py --source 0
+```
+Replace 0 with the camera number if the camera is not the defult webcam. 
+### From an IP camera:
+If your IP camera require a difficult API to access its stream, you would be better to try using creen cap. \
+If you can get it's stream in *http* or *rtsp* then try the following:
+```
+python detect.py --source rtsp://<username>:<password>@<IP address of device>:<RTSP port>/Streaming/channels/<channelnumber><stream number>
+```
+### From your screen:
+If none of the above stream sources are possiable, we also support screen cap. \
+If you can get your stream to play on your screen
+```
+python detcet.py --scource screen
+```
+This will start screen cap as shown below: 
+```
+1/1: screen... Plase select regin:
+X:                                     1151Y:                                     1640
+```
+ Left click top left and then bottom right to select the screen regin you would like to capture.

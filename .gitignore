@@ -1,7 +1,8 @@
 *.png
 *.mp4
+*.pt
 .vscode
-__pycache__
+**/__pycache__/
 checkpoints
 config/yolov3.weights
 data/sparrow_nsparrow
@@ -14,6 +15,9 @@ DownloadFiles - Shortcut.lnk
 config/yolov3-spp-ultralytics.pt
 test
 weights
+output
 old_model/config/yolov3.weights
 old_model/checkpoints
 old_model/raw
+v3_model/__pycache__
+inference
