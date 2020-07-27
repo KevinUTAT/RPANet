@@ -11,11 +11,15 @@ A more streamlined process is added to process training data coming in as \
 videos and small modifications are made to the model to fit it for Drone tracking.
 
 ## Change log
+### 2020-07-27:
+Re-work the screen capture method. Using python-mss instead of PIL. \
+This is able to increas inference speed to 15 to 20 fps (RTX2070 Max-Q), \
+and reduce latency to around 0.1s 
 ### 2020-07-26:
 Porting the latest v2.0 version of Ultralytics YOLOv5 in replace of v3. \
 The weight file size is reduced to under 100MB, and seen small inference speed improvment.\
 So far seems like the inference robustness also improved as scenes with small obstacles are beening recognized (wire fence) \
-Tried first with YOLOv4 but is much more difficult to port the model \ 
+Tried first with YOLOv4 but is much more difficult to port the model \
 compare to v5 as Ultralytics resued many code from v3 to implement v5
 ### 2020-07-10:
 Including screen cap input. \
@@ -26,9 +30,10 @@ New model implimentation from Ultralytics with much improved prefromence.
 ### 2020-07-05: 
 Upload current model to github
 ## Know issues
-- BBox works quite poorly with 1920x1080 images, using makesense.ai instead /
+- BBox works quite poorly with 1920x1080 images, using makesense.ai instead 
 ## To do
-- Reduce inference delay (currently about 0.5s)
+- Bench marking performence between different model (S vs M vs L vs X)
+- Find more applications?
   
 ## Files
 **train.py**: Training the modle. Options can be set through arguments \

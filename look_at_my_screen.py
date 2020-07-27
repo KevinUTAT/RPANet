@@ -1,8 +1,12 @@
 from PIL import ImageGrab
+from PIL import Image
 import numpy as np
 import cv2
 import pyautogui
 import win32api
+import time
+from mss import mss
+
 
 
 def get_screen_regin():
@@ -25,11 +29,17 @@ def get_screen_regin():
 if __name__ == '__main__': 
     screen_x, screen_y = get_screen_regin()
     print(screen_x[0],screen_y[0],screen_x[1],screen_y[1])
+    window = {'top': screen_y[0], 'left': screen_x[0], 'width': (screen_x[1] - screen_x[0]), 'height': (screen_y[1] - screen_y[0])}
     while(True):
-        img = ImageGrab.grab(bbox=(screen_x[0],screen_y[0],screen_x[1],screen_y[1]),\
-            all_screens=True) #bbox specifies specific region (bbox= x,y,width,height)
-        img_np = np.array(img)
-        frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+        start_time = time.time()
+        # img = ImageGrab.grab(bbox=(screen_x[0],screen_y[0],screen_x[1],screen_y[1]),\
+        #     all_screens=True) #bbox specifies specific region (bbox= x,y,width,height)
+        # img_np = np.array(img)
+        # frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+        cap = mss().grab(window)
+        img = Image.frombytes("RGB", (cap.width, cap.height), cap.rgb)
+        frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        print("Time: ", time.time() - start_time)
         cv2.imshow("Debug", frame)
         cv2.waitKey(25)
     cv2.destroyAllWindows()

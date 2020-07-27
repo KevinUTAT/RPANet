@@ -14,6 +14,7 @@ from PIL import Image, ExifTags
 from PIL import ImageGrab
 from torch.utils.data import Dataset
 from tqdm import tqdm
+from mss import mss
 
 from utils.utils import xyxy2xywh, xywh2xyxy, torch_distributed_zero_first
 import look_at_my_screen
@@ -157,6 +158,7 @@ class LoadImages:  # for inference
 class LoadWebcam:  # for inference
     def __init__(self, pipe=0, img_size=640):
         self.img_size = img_size
+        print("Webcam loaded")
 
         if pipe == '0':
             pipe = 0  # local camera
@@ -240,10 +242,15 @@ class LoadStreams:  # multiple IP or RTSP cameras
                 print("Plase select regin:")
                 self.screen_x, self.screen_y = look_at_my_screen.get_screen_regin()
                 print(self.screen_x[0],self.screen_y[0],self.screen_x[1],self.screen_y[1])
-                img = ImageGrab.grab(bbox=(self.screen_x[0],self.screen_y[0],self.screen_x[1],self.screen_y[1]),\
-                    all_screens=True)
-                img_np = np.array(img)
-                frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+                # img = ImageGrab.grab(bbox=(self.screen_x[0],self.screen_y[0],self.screen_x[1],self.screen_y[1]),\
+                #     all_screens=True)
+                # img_np = np.array(img)
+                # frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+                window = {'top': self.screen_y[0], 'left': self.screen_x[0], 'width': (self.screen_x[1] - self.screen_x[0]), \
+                    'height': (self.screen_y[1] - self.screen_y[0])}
+                cap = mss().grab(window)
+                img = Image.frombytes("RGB", (cap.width, cap.height), cap.rgb)
+                frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
                 w = int(len(frame[0]))
                 h = int(len(frame))
                 self.imgs[i] = frame
@@ -271,16 +278,13 @@ class LoadStreams:  # multiple IP or RTSP cameras
     def update(self, index, cap):
         # Read next stream frame in a daemon thread
         if cap == 'Screen' or cap == 'screen':
-            n = 0
+            window = {'top': self.screen_y[0], 'left': self.screen_x[0], 'width': (self.screen_x[1] - self.screen_x[0]), \
+                    'height': (self.screen_y[1] - self.screen_y[0])}
             while True:
-                n += 1
-                img = ImageGrab.grab(bbox=(self.screen_x[0],self.screen_y[0],self.screen_x[1],self.screen_y[1]),\
-                    all_screens=True)
-                if n == 1:
-                    img_np = np.array(img)
-                    frame = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-                    self.imgs[index] = frame
-                    n = 0
+                cap = mss().grab(window)
+                img = Image.frombytes("RGB", (cap.width, cap.height), cap.rgb)
+                frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+                self.imgs[index] = frame
                 time.sleep(0.01)
         else:
             n = 0
