@@ -1,6 +1,6 @@
 import cv2
 
-VIDEO_SRC = "video/cuttingdata3.mp4"
+VIDEO_SRC = "video/0728.mp4"
 
 def frames_slicer(video_dir, interval=15):
     vidcap = cv2.VideoCapture(video_dir)
@@ -22,4 +22,4 @@ def frames_slicer(video_dir, interval=15):
 
 
 if __name__ == '__main__': 
-    frames_slicer(VIDEO_SRC, 1800)
+    frames_slicer(VIDEO_SRC, 10)
