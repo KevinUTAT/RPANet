@@ -11,6 +11,15 @@ A more streamlined process is added to process training data coming in as \
 videos and small modifications are made to the model to fit it for Drone tracking.
 
 ## Change log
+### 2020-08-01:
+Trying to incroperating **active learning**. \
+The inference module will now (optional) save images that have detected target with low confidence. \
+User should go label those images and add them into training dataset. \
+This should improve the model with only small amout of labeling needed.
+```
+python detcet.py --scource screen --active 0.3
+```
+The above example will save images with detection confidence between 0.1 and 0.3.
 ### 2020-07-27:
 Re-work the screen capture method. Using python-mss instead of PIL. \
 This is able to increas inference speed to 15 to 20 fps (RTX2070 Max-Q), \

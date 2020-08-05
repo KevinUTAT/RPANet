@@ -1,10 +1,14 @@
 import argparse
+import datetime
 
 import torch.backends.cudnn as cudnn
+from numpy import random
 
 from models.experimental import *
 from utils.datasets import *
 from utils.utils import *
+
+active_output_dir = "active/images/"
 
 
 def detect(save_img=False):
@@ -12,6 +16,8 @@ def detect(save_img=False):
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
     webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
     screen_cap = source =='screen' or source == 'Screen'
+    active_learn = opt.active > 0.1
+    active_learn_thres = opt.active
 
     # Initialize
     device = torch_utils.select_device(opt.device)
@@ -51,6 +57,7 @@ def detect(save_img=False):
     t0 = time.time()
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
+    frame_count = 0
     for path, img, im0s, vid_cap in dataset:
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
@@ -89,6 +96,28 @@ def detect(save_img=False):
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
+
+                # output unanotated img for training
+                if active_learn: 
+                    frame_count += 1
+                    if screen_cap or webcam:
+                        inter_frames = 2
+                    elif dataset.mode == 'images':
+                        inter_frames = 1
+                    else:
+                        inter_frames = 5
+                    if frame_count >= inter_frames:
+                        frame_count = 0
+                        for *xyxy, conf, cls in det:
+                            if conf < active_learn_thres and conf >= 0.1:
+                                timestemp = datetime.datetime.now()
+                                new_name = timestemp.strftime('%y') + timestemp.strftime('%j') \
+                                    + timestemp.strftime('%H') + timestemp.strftime('%M') \
+                                        + timestemp.strftime('%S') + timestemp.strftime('%f') \
+                                            + '.png'
+                                out_dir_name = active_output_dir + new_name
+                                cv2.imwrite(out_dir_name, im0)
+                                break
 
                 # Write results
                 for *xyxy, conf, cls in det:
@@ -138,7 +167,7 @@ def detect(save_img=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='weights/best.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='video/video_edit0.mp4', help='source')  # file/folder, 0 for webcam ../Drone-Yolo/video/cuttingdata3.mp4
+    parser.add_argument('--source', type=str, default='video/0728.mp4', help='source')  # file/folder, 0 for webcam ../Drone-Yolo/video/cuttingdata3.mp4
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=1024, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.5, help='object confidence threshold')
@@ -150,6 +179,7 @@ if __name__ == '__main__':
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
+    parser.add_argument('--active', type=float, default=0, help='out put threshold, enable active learning ouput when set to non zero')
     opt = parser.parse_args()
     print(opt)
 
