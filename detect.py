@@ -7,6 +7,7 @@ from numpy import random
 from models.experimental import *
 from utils.datasets import *
 from utils.utils import *
+from old_model.sort import *
 
 active_output_dir = "active/images/"
 
@@ -65,6 +66,7 @@ def detect(save_img=False):
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
 
+        moTrack = Sort()
         # Inference
         t1 = torch_utils.time_synchronized()
         pred = model(img, augment=opt.augment)[0]
@@ -76,6 +78,11 @@ def detect(save_img=False):
         # Apply Classifier
         if classify:
             pred = apply_classifier(pred, modelc, img, im0s)
+
+        # Apply motion tracking
+        if pred is not None:
+            tracked_objs = moTrack.update(pred.cpu())
+            print(tracked_objs)
 
         # Process detections
         for i, det in enumerate(pred):  # detections per image
