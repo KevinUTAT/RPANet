@@ -7,7 +7,7 @@ from numpy import random
 from models.experimental import *
 from utils.datasets import *
 from utils.utils import *
-from old_model.sort import *
+from sort import *
 
 active_output_dir = "active/images/"
 
@@ -81,7 +81,7 @@ def detect(save_img=False):
 
         # Apply motion tracking
         if pred is not None:
-            tracked_objs = moTrack.update(pred.cpu())
+            tracked_objs = moTrack.update(pred)
             print(tracked_objs)
 
         # Process detections
