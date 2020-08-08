@@ -1,3 +1,5 @@
+# import os
+# os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 import argparse
 import datetime
 
@@ -8,6 +10,8 @@ from models.experimental import *
 from utils.datasets import *
 from utils.utils import *
 from sort import *
+
+# os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 active_output_dir = "active/images/"
 
@@ -55,6 +59,7 @@ def detect(save_img=False):
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
     # Run inference
+    moTrack = Sort()
     t0 = time.time()
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
@@ -66,7 +71,7 @@ def detect(save_img=False):
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
 
-        moTrack = Sort()
+        
         # Inference
         t1 = torch_utils.time_synchronized()
         pred = model(img, augment=opt.augment)[0]
@@ -127,6 +132,7 @@ def detect(save_img=False):
                                 break
 
                 # Write results
+                det_idx = 0
                 for *xyxy, conf, cls in det:
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
@@ -135,7 +141,11 @@ def detect(save_img=False):
 
                     if save_img or view_img:  # Add bbox to image
                         label = '%s %.2f' % (names[int(cls)], conf)
-                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
+                        if len(tracked_objs) > det_idx:
+                            plot_one_box(xyxy, im0, label=label, track_id=tracked_objs[det_idx][4], color=colors[int(cls)], line_thickness=1)
+                        else:
+                            plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
+                    det_idx += 1
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))

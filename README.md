@@ -8,9 +8,15 @@ His original model can be find here: \
 https://github.com/cfotache/pytorch_custom_yolo_training \
 \
 A more streamlined process is added to process training data coming in as \
-videos and small modifications are made to the model to fit it for Drone tracking.
+videos and small modifications are made to the model to fit it for Drone tracking. \
+\
+To track drones in realtime, the Simple Online Realtime Tracker by Alex Bewley is used: \
+https://github.com/abewley/sort
+
 
 ## Change log
+### 2020-08-08:
+Add object motion tracking ability. So far not doing anything with it, only write the tracking ID to BBox
 ### 2020-08-01:
 Trying to incroperating **active learning**. \
 The inference module will now (optional) save images that have detected target with low confidence. \
@@ -39,7 +45,7 @@ New model implimentation from Ultralytics with much improved prefromence.
 ### 2020-07-05: 
 Upload current model to github
 ## Know issues
-- BBox works quite poorly with 1920x1080 images, using makesense.ai instead 
+- BBox.py works quite poorly with 1920x1080 images, using makesense.ai instead 
 ## To do
 - Bench marking performence between different model (S vs M vs L vs X)
 - Find more applications?

@@ -197,7 +197,7 @@ def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
 
 
 class Sort(object):
-  def __init__(self, max_age=1, min_hits=3, iou_threshold=0.3):
+  def __init__(self, max_age=1, min_hits=3, iou_threshold=0.1):
     """
     Sets key parameters for SORT
     """
@@ -207,7 +207,22 @@ class Sort(object):
     self.trackers = []
     self.frame_count = 0
 
-  def update(self, dets=np.empty((0, 5))):
+  def update(self, pred=np.empty((0, 5))):
+    # converting pred format
+    dets = []
+    confs = []
+    if pred != [None]:
+      # print(pred)
+      for _, det in enumerate(pred):
+        for *xyxy, conf, cls in det:
+          dets.append([int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3]), float(conf)])
+          confs.append(float(conf))
+    else:
+      dets = np.empty((0, 5))
+      confs = np.empty((0, 5))
+    # print(dets)
+    # print(confs)
+    dets = np.array(dets)
     """
     Params:
       dets - a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
