@@ -15,8 +15,12 @@ https://github.com/abewley/sort
 
 
 ## Change log
-### 2020-08-08:
-Add object motion tracking ability. So far not doing anything with it, only write the tracking ID to BBox
+### 2020-08-09:
+Add a globle dictionary to store all tracking information. \
+Add object motion tracking ability. \
+The tracking ID is now displayed with the BBox. \
+Speed of object (pixel speed) is now avaliable in the Drone class. \
+Imporved active leaarning logic to reduce redundant images output.
 ### 2020-08-01:
 Trying to incroperating **active learning**. \
 The inference module will now (optional) save images that have detected target with low confidence. \

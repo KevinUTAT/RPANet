@@ -2,6 +2,7 @@
 # os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 import argparse
 import datetime
+import math
 
 import torch.backends.cudnn as cudnn
 from numpy import random
@@ -14,6 +15,58 @@ from sort import *
 # os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 active_output_dir = "active/images/"
+tracking_list = {}
+
+# class represents one tracked drone in scene
+class Drone(object):
+    def __init__(self, drone_cls, tracking_id=-1):
+        self.cls = drone_cls
+        self.tracking_id = tracking_id
+
+        self.x = -1
+        self.y = -1
+        self.w = -1
+        self.h = -1
+        self.time = time.time()
+
+        self.speed = -1
+
+        self.x_prev = -1
+        self.y_prev = -1
+        self.w_prev = -1
+        self.h_prev = -1
+        self.time_prev = time.time() - 1
+
+
+    def update(self, top, left, bottom, right):
+        self.x_prev = self.x
+        self.y_prev = self.y
+        self.w_prev = self.w
+        self.h_prev = self.h
+        self.time_prev = self.time
+
+        self.x = int((top + bottom)/2)
+        self.y = int((left + right)/2)
+        self.w = int(abs(right - left))
+        self.h = int(abs(bottom - top))
+        self.time = time.time()
+
+        displacement = math.sqrt((self.x - self.x_prev) ** 2 + (self.y - self.y_prev) ** 2)
+        if float(self.time - self.time_prev) > 0:
+            self.speed = displacement / float(self.time - self.time_prev)
+        else:
+            self.speed = 0
+
+
+    def __str__(self):
+        position_str = '(' + str(self.x) + ', ' + str(self.y) + ')'
+        size_str = '(' + str(self.w) + 'x' + str(self.h) + ')'
+        speed_str = str(self.speed) + 'pix/s'
+        return position_str + ' : ' + size_str + ' @' + speed_str
+    
+
+    def __repr__(self):
+        return self.__str__()
 
 
 def detect(save_img=False):
@@ -60,6 +113,7 @@ def detect(save_img=False):
 
     # Run inference
     moTrack = Sort()
+    lagerest_track_id = -1
     t0 = time.time()
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
@@ -87,7 +141,7 @@ def detect(save_img=False):
         # Apply motion tracking
         if pred is not None:
             tracked_objs = moTrack.update(pred)
-            print(tracked_objs)
+            # print(tracked_objs)
 
         # Process detections
         for i, det in enumerate(pred):  # detections per image
@@ -111,17 +165,11 @@ def detect(save_img=False):
 
                 # output unanotated img for training
                 if active_learn: 
-                    frame_count += 1
-                    if screen_cap or webcam:
-                        inter_frames = 2
-                    elif dataset.mode == 'images':
-                        inter_frames = 1
-                    else:
-                        inter_frames = 5
-                    if frame_count >= inter_frames:
-                        frame_count = 0
-                        for *xyxy, conf, cls in det:
-                            if conf < active_learn_thres and conf >= 0.1:
+                    det_idx = 0
+                    for *xyxy, conf, cls in det:
+                        if conf < active_learn_thres and conf >= 0.1:
+                            min_speed = im0.shape[0] / 10
+                            if tracking_list[tracked_objs[det_idx][4]].speed > min_speed:
                                 timestemp = datetime.datetime.now()
                                 new_name = timestemp.strftime('%y') + timestemp.strftime('%j') \
                                     + timestemp.strftime('%H') + timestemp.strftime('%M') \
@@ -130,6 +178,7 @@ def detect(save_img=False):
                                 out_dir_name = active_output_dir + new_name
                                 cv2.imwrite(out_dir_name, im0)
                                 break
+                        det_idx += 1
 
                 # Write results
                 det_idx = 0
@@ -138,6 +187,19 @@ def detect(save_img=False):
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         with open(txt_path + '.txt', 'a') as f:
                             f.write(('%g ' * 5 + '\n') % (cls, *xywh))  # label format
+
+                    # update the tracking list
+                    if len(tracked_objs) > det_idx:
+                        # create a new object if the tracking id is new
+                        if tracked_objs[det_idx][4] > lagerest_track_id:
+                            lagerest_track_id = tracked_objs[det_idx][4]
+                            new_drone = Drone(names[int(cls)], tracked_objs[det_idx][4])
+                            new_drone.update(xyxy[0], xyxy[1], xyxy[2], xyxy[3])
+                            tracking_list[tracked_objs[det_idx][4]] = new_drone
+                        # if its a existing id, update current object
+                        else:
+                            tracking_list[tracked_objs[det_idx][4]].update(xyxy[0], xyxy[1], xyxy[2], xyxy[3])
+
 
                     if save_img or view_img:  # Add bbox to image
                         label = '%s %.2f' % (names[int(cls)], conf)
@@ -172,6 +234,7 @@ def detect(save_img=False):
                         h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                         vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*fourcc), fps, (w, h))
                     vid_writer.write(im0)
+        # print(tracking_list)
 
     if save_txt or save_img:
         print('Results saved to %s' % os.getcwd() + os.sep + out)
