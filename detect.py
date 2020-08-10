@@ -74,7 +74,7 @@ def detect(save_img=False):
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
     webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
     screen_cap = source =='screen' or source == 'Screen'
-    active_learn = opt.active > 0.1
+    active_learn = opt.active > 0.05
     active_learn_thres = opt.active
 
     # Initialize
@@ -163,35 +163,12 @@ def detect(save_img=False):
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
 
-                # output unanotated img for training
-                if active_learn: 
-                    det_idx = 0
-                    for *xyxy, conf, cls in det:
-                        if conf < active_learn_thres and conf >= 0.1:
-                            min_speed = im0.shape[0] / 10
-                            if tracking_list[tracked_objs[det_idx][4]].speed > min_speed:
-                                timestemp = datetime.datetime.now()
-                                new_name = timestemp.strftime('%y') + timestemp.strftime('%j') \
-                                    + timestemp.strftime('%H') + timestemp.strftime('%M') \
-                                        + timestemp.strftime('%S') + timestemp.strftime('%f') \
-                                            + '.png'
-                                out_dir_name = active_output_dir + new_name
-                                cv2.imwrite(out_dir_name, im0)
-                                break
-                        det_idx += 1
-
-                # Write results
+                # update the tracking list
                 det_idx = 0
                 for *xyxy, conf, cls in det:
-                    if save_txt:  # Write to file
-                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                        with open(txt_path + '.txt', 'a') as f:
-                            f.write(('%g ' * 5 + '\n') % (cls, *xywh))  # label format
-
-                    # update the tracking list
                     if len(tracked_objs) > det_idx:
                         # create a new object if the tracking id is new
-                        if tracked_objs[det_idx][4] > lagerest_track_id:
+                        if (tracked_objs[det_idx][4] not in tracking_list):
                             lagerest_track_id = tracked_objs[det_idx][4]
                             new_drone = Drone(names[int(cls)], tracked_objs[det_idx][4])
                             new_drone.update(xyxy[0], xyxy[1], xyxy[2], xyxy[3])
@@ -199,7 +176,36 @@ def detect(save_img=False):
                         # if its a existing id, update current object
                         else:
                             tracking_list[tracked_objs[det_idx][4]].update(xyxy[0], xyxy[1], xyxy[2], xyxy[3])
+                    det_idx += 1
 
+                # output unanotated img for training
+                if active_learn: 
+                    det_idx = 0
+                    for *xyxy, conf, cls in det:
+                        if conf < active_learn_thres and conf >= 0.05:
+                            # if object is moving slow (not moving) don't output
+                            # this reduce redundent frames output from stationary scene
+                            min_speed = im0.shape[0] / 10
+                            if (len(tracked_objs) > det_idx) and (tracked_objs[det_idx][4] in tracking_list):
+                                if tracking_list[tracked_objs[det_idx][4]].speed < min_speed:
+                                    continue
+
+                            timestemp = datetime.datetime.now()
+                            new_name = timestemp.strftime('%y') + timestemp.strftime('%j') \
+                                + timestemp.strftime('%H') + timestemp.strftime('%M') \
+                                    + timestemp.strftime('%S') + timestemp.strftime('%f') \
+                                        + '.png'
+                            out_dir_name = active_output_dir + new_name
+                            cv2.imwrite(out_dir_name, im0)
+                            break
+                        det_idx += 1
+
+                # Write results
+                for *xyxy, conf, cls in det:
+                    if save_txt:  # Write to file
+                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                        with open(txt_path + '.txt', 'a') as f:
+                            f.write(('%g ' * 5 + '\n') % (cls, *xywh))  # label format
 
                     if save_img or view_img:  # Add bbox to image
                         label = '%s %.2f' % (names[int(cls)], conf)
@@ -207,7 +213,6 @@ def detect(save_img=False):
                             plot_one_box(xyxy, im0, label=label, track_id=tracked_objs[det_idx][4], color=colors[int(cls)], line_thickness=1)
                         else:
                             plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
-                    det_idx += 1
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
