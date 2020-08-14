@@ -201,6 +201,7 @@ def detect(save_img=False):
                         det_idx += 1
 
                 # Write results
+                det_idx = 0
                 for *xyxy, conf, cls in det:
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
@@ -213,6 +214,7 @@ def detect(save_img=False):
                             plot_one_box(xyxy, im0, label=label, track_id=tracked_objs[det_idx][4], color=colors[int(cls)], line_thickness=1)
                         else:
                             plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
+                    det_idx += 1
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
