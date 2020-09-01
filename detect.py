@@ -30,6 +30,11 @@ class Drone(object):
         self.time = time.time()
 
         self.speed = -1
+        # x, y components of velocity
+        # Note the positive direction is down and right
+        # the absolute maginitute here dose not matters
+        self.velocity_vec_x = 0
+        self.velocity_vec_y = 0
 
         self.x_prev = -1
         self.y_prev = -1
@@ -57,6 +62,9 @@ class Drone(object):
         else:
             self.speed = 0
 
+        self.velocity_vec_x = self.x - self.x_prev
+        self.velocity_vec_y = self.y - self.y_prev
+
 
     def __str__(self):
         position_str = '(' + str(self.x) + ', ' + str(self.y) + ')'
@@ -76,6 +84,7 @@ def detect(save_img=False):
     screen_cap = source =='screen' or source == 'Screen'
     active_learn = opt.active > 0.05
     active_learn_thres = opt.active
+    debug = opt.debug
 
     # Initialize
     device = torch_utils.select_device(opt.device)
@@ -211,6 +220,10 @@ def detect(save_img=False):
                     if save_img or view_img:  # Add bbox to image
                         label = '%s %.2f' % (names[int(cls)], conf)
                         if len(tracked_objs) > det_idx:
+                            if debug:
+                                plot_one_box(xyxy, im0, label=label, track_id=tracked_objs[det_idx][4], \
+                                    color=colors[int(cls)], line_thickness=1, \
+                                        speed=tracking_list[tracked_objs[det_idx][4]].speed)
                             plot_one_box(xyxy, im0, label=label, track_id=tracked_objs[det_idx][4], color=colors[int(cls)], line_thickness=1)
                         else:
                             plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
@@ -267,6 +280,7 @@ if __name__ == '__main__':
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
     parser.add_argument('--active', type=float, default=0, help='out put threshold, enable active learning ouput when set to non zero')
+    parser.add_argument('--debug', type=bool, default=False, help='add more info in image overlay')
     opt = parser.parse_args()
     print(opt)
 
