@@ -929,7 +929,8 @@ def butter_lowpass_filtfilt(data, cutoff=1500, fs=50000, order=5):
     return filtfilt(b, a, data)  # forward-backward filter
 
 
-def plot_one_box(x, img, color=None, label=None, track_id=None, line_thickness=None, speed=None):
+def plot_one_box(x, img, color=None, label=None, track_id=None, line_thickness=None, speed=None, \
+        velo_x=None, velo_y=None):
     # Plots one bounding box on image img
     tl = line_thickness or round(0.002 * (img.shape[0] + img.shape[1]) / 4) + 1  # line/font thickness
     color = color or [random.randint(0, 255) for _ in range(3)]
@@ -945,6 +946,13 @@ def plot_one_box(x, img, color=None, label=None, track_id=None, line_thickness=N
         c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
         cv2.rectangle(img, c1, c2, color, -1, cv2.LINE_AA)  # filled
         cv2.putText(img, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
+        if velo_x and velo_y:
+            center_x = int((x[0] + x[2]) / 2)
+            center_y = int((x[1] + x[3]) / 2)
+            start = (center_x, center_y)
+            end = ((center_x + int(5*velo_x)), (center_y + int(5*velo_y)))
+            print(start, end)
+            img = cv2.arrowedLine(img, start, end, color, thickness=2*tf, line_type=cv2.LINE_AA)
 
 
 def plot_wh_methods():  # from utils.utils import *; plot_wh_methods()

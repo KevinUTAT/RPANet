@@ -32,7 +32,6 @@ class Drone(object):
         self.speed = -1
         # x, y components of velocity
         # Note the positive direction is down and right
-        # the absolute maginitute here dose not matters
         self.velocity_vec_x = 0
         self.velocity_vec_y = 0
 
@@ -56,11 +55,16 @@ class Drone(object):
         self.h = int(abs(bottom - top))
         self.time = time.time()
 
+        # Calculating speed and velocity
         displacement = math.sqrt((self.x - self.x_prev) ** 2 + (self.y - self.y_prev) ** 2)
         if float(self.time - self.time_prev) > 0:
             self.speed = displacement / float(self.time - self.time_prev)
+            self.velocity_vec_x = (self.x - self.x_prev) / float(self.time - self.time_prev)
+            self.velocity_vec_y = (self.y - self.y_prev) / float(self.time - self.time_prev)
         else:
             self.speed = 0
+            self.velocity_vec_x = 0
+            self.velocity_vec_y = 0
 
         self.velocity_vec_x = self.x - self.x_prev
         self.velocity_vec_y = self.y - self.y_prev
@@ -223,7 +227,9 @@ def detect(save_img=False):
                             if debug:
                                 plot_one_box(xyxy, im0, label=label, track_id=tracked_objs[det_idx][4], \
                                     color=colors[int(cls)], line_thickness=1, \
-                                        speed=tracking_list[tracked_objs[det_idx][4]].speed)
+                                    speed=tracking_list[tracked_objs[det_idx][4]].speed, \
+                                    velo_x=tracking_list[tracked_objs[det_idx][4]].velocity_vec_x, \
+                                    velo_y=tracking_list[tracked_objs[det_idx][4]].velocity_vec_y)
                             plot_one_box(xyxy, im0, label=label, track_id=tracked_objs[det_idx][4], color=colors[int(cls)], line_thickness=1)
                         else:
                             plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
